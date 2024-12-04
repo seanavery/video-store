@@ -6,35 +6,12 @@ on:
 
 jobs:
   publish:
-    strategy:
-      matrix:
-        include:
-          - platform: linux/amd64
-            runs-on: ubuntu-latest
-          - platform: linux/arm64
-            runs-on: buildjet-8vcpu-ubuntu-2204-arm
-          - platform: darwin/arm64
-            runs-on: macos-latest
-
-    runs-on: ${{ matrix.runs-on }}
-
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v3
+    - uses: viamrobotics/build-action@v1
       with:
-        go-version: 1.21.13
-
-    - name: Build and package
-      run: make module
-
-    - name: Upload video-store module to registry
-      uses: viamrobotics/upload-module@main
-      with:
-        meta-path: meta.json
-        module-path: module.tar.gz
-        platform: ${{ matrix.platform }}
         version: ${{ github.ref_name }}
+        ref: ${{ github.sha }}
         key-id: ${{ secrets.VIAM_DEV_API_KEY_ID }}
         key-value: ${{ secrets.VIAM_DEV_API_KEY }}
