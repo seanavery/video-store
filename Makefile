@@ -34,7 +34,7 @@ FFMPEG_OPTS ?= --prefix=$(FFMPEG_BUILD) \
                --enable-protocol=crypto \
                --enable-bsf=h264_mp4toannexb
 
-CGO_LDFLAGS := -L$(FFMPEG_BUILD)/lib -lavcodec -lavutil -lavformat -lz
+CGO_LDFLAGS := -L$(FFMPEG_BUILD)/lib -lavcodec -lavutil -lavformat -lswscale -lz
 ifeq ($(SOURCE_OS),linux)
 	CGO_LDFLAGS += -l:libjpeg.a -l:libx264.a
 endif

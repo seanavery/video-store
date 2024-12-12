@@ -3,6 +3,10 @@ package main
 
 import (
 	"context"
+	"log"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	videostore "github.com/viam-modules/video-store/cam"
 	"go.viam.com/rdk/components/camera"
@@ -16,6 +20,9 @@ func main() {
 }
 
 func mainWithArgs(ctx context.Context, _ []string, _ logging.Logger) error {
+	go func() {
+		log.Println(http.ListenAndServe("0.0.0.0:6061", nil))
+	}()
 	module, err := module.NewModuleFromArgs(ctx)
 	if err != nil {
 		return err
