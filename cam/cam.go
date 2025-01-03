@@ -361,6 +361,11 @@ func (vs *videostore) fetchFrames(ctx context.Context) {
 	frameInterval := time.Second / time.Duration(vs.conf.Properties.Framerate)
 	ticker := time.NewTicker(frameInterval)
 	defer ticker.Stop()
+
+	var lastFrameTime time.Time
+	var frameCount int
+	var startTime time.Time
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -373,6 +378,19 @@ func (vs *videostore) fetchFrames(ctx context.Context) {
 				continue
 			}
 			vs.latestFrame.Store(&bytes)
+
+			// Calculate and log FPS
+			frameCount++
+			if !lastFrameTime.IsZero() {
+				elapsed := time.Since(startTime).Seconds()
+				if elapsed >= 1.0 {
+					fps := float64(frameCount) / elapsed
+					vs.logger.Infof("Current FPS: %.2f", fps)
+					frameCount = 0
+					startTime = time.Now()
+				}
+			}
+			lastFrameTime = time.Now()
 			// frame, err := camera.DecodeImageFromCamera(ctx, rutils.MimeTypeJPEG, nil, vs.cam)
 			// if err != nil {
 			// 	vs.logger.Warn("failed to get frame from camera", err)
