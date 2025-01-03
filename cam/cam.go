@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"image"
 	"path/filepath"
 	"sync/atomic"
 	"time"
@@ -16,7 +15,6 @@ import (
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/pointcloud"
 	"go.viam.com/rdk/resource"
-	"go.viam.com/rdk/rimage"
 	rutils "go.viam.com/rdk/utils"
 	"go.viam.com/utils"
 )
@@ -52,8 +50,9 @@ type videostore struct {
 	conf   *Config
 	logger logging.Logger
 
-	cam         camera.Camera
-	latestFrame atomic.Pointer[image.Image]
+	cam camera.Camera
+	// latestFrame atomic.Pointer[image.Image]
+	latestFrame atomic.Pointer[[]byte]
 	workers     *utils.StoppableWorkers
 
 	enc  *encoder
@@ -367,19 +366,26 @@ func (vs *videostore) fetchFrames(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			frame, err := camera.DecodeImageFromCamera(ctx, rutils.MimeTypeJPEG, nil, vs.cam)
+			bytes, _, err := vs.cam.Image(ctx, "", map[string]interface{}{})
 			if err != nil {
 				vs.logger.Warn("failed to get frame from camera", err)
 				time.Sleep(retryInterval * time.Second)
 				continue
 			}
-			lazyImage, ok := frame.(*rimage.LazyEncodedImage)
-			if !ok {
-				vs.logger.Error("frame is not of type *rimage.LazyEncodedImage")
-				return
-			}
-			decodedImage := lazyImage.DecodedImage()
-			vs.latestFrame.Store(&decodedImage)
+			vs.latestFrame.Store(&bytes)
+			// frame, err := camera.DecodeImageFromCamera(ctx, rutils.MimeTypeJPEG, nil, vs.cam)
+			// if err != nil {
+			// 	vs.logger.Warn("failed to get frame from camera", err)
+			// 	time.Sleep(retryInterval * time.Second)
+			// 	continue
+			// }
+			// lazyImage, ok := frame.(*rimage.LazyEncodedImage)
+			// if !ok {
+			// 	vs.logger.Error("frame is not of type *rimage.LazyEncodedImage")
+			// 	return
+			// }
+			// decodedImage := lazyImage.DecodedImage()
+			// vs.latestFrame.Store(&decodedImage)
 		}
 	}
 }
